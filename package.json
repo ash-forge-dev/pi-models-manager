@@ -1,0 +1,41 @@
+{
+  "name": "pi-models-manager",
+  "version": "0.1.0",
+  "description": "Interactive manager for the models and connection settings of your own (non-built-in) pi endpoints: per-model overrides, cycle scope, compat flags, and live checks.",
+  "keywords": [
+    "pi-extension",
+    "pi-package",
+    "models",
+    "openai-compatible",
+    "vllm",
+    "ollama",
+    "llama.cpp"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "files": [
+    "index.ts",
+    "lib",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node test/discovery.mjs && node test/headless.mjs && node test/loader.mjs && node test/portability.mjs"
+  },
+  "author": "Ash",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ash-forge-dev/pi-models-manager.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ash-forge-dev/pi-models-manager/issues"
+  },
+  "homepage": "https://github.com/ash-forge-dev/pi-models-manager#readme"
+}
