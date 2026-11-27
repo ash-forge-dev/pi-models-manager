@@ -43,23 +43,40 @@ intact and readable.
 
 ## Install
 
-This is a normal pi package (`package.json` with a `pi.extensions` manifest), so any
-of these work:
+This is a normal pi package: a `package.json` with a `pi.extensions` manifest, no
+dependencies to install. Pick whichever suits you.
+
+**Clone it into place** — simplest, and edits take effect with `/reload`:
 
 ```bash
-# 1. drop the directory in as a package
-cp -r models-manager ~/.pi/agent/extensions/
-#    ...or project-local, for one repo only:
-cp -r models-manager .pi/extensions/
-
-# 2. or install it as a package source once published
-pi install npm:pi-models-manager
-pi install git:github.com/<you>/pi-models-manager
+git clone https://github.com/ash-forge-dev/pi-models-manager.git \
+  ~/.pi/agent/extensions/pi-models-manager
+# project-local instead (one repo only): clone into .pi/extensions/
 ```
 
-Both layouts load the same way: pi resolves the directory through
+**Let pi manage it as a package source** — records it in `settings.json`, updates
+with `pi update --extensions`:
+
+```bash
+pi install git:github.com/ash-forge-dev/pi-models-manager
+```
+
+The repository is currently **private**, so that command needs your GitHub
+credentials (the `gh` credential helper set up earlier covers it). Anyone else can
+use it once the repo is public.
+
+**From a local clone, without copying or tracking it**:
+
+```bash
+pi install ./pi-models-manager
+```
+
+**Not on npm.** `pi install npm:pi-models-manager` will not work until the package
+is actually published, which requires an npm account and the name being free.
+
+All of these load the same way: pi resolves the directory through
 `package.json → pi.extensions`, and falls back to `index.ts` if the manifest is
-missing. After editing the code run `/reload` in pi.
+missing. After changing the code run `/reload` in pi.
 
 `PI_CODING_AGENT_DIR` relocates the agent directory; the tests use it to run
 against a throwaway sandbox.
@@ -275,7 +292,7 @@ Three headless suites, no terminal required:
 
 ```bash
 cd ~/.pi/agent/extensions/models-manager
-npm test          # discovery + headless + loader
+npm test          # discovery + headless + loader + portability
 ```
 
 `test/headless.mjs` loads the extension through jiti, points
