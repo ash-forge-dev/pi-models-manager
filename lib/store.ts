@@ -1,26 +1,12 @@
 // Reading and writing pi's JSON config files without losing data.
 //
-// Writes are: read current file -> mutate parsed object -> back up -> write a
-// temp file -> rename over the original. That keeps unknown keys, key order, and
-// file permissions intact, and never truncates a file that failed to parse.
-import {
-	chmodSync,
-	copyFileSync,
-	existsSync,
-	mkdirSync,
-	readdirSync,
-	readFileSync,
-	renameSync,
-	statSync,
-	unlinkSync,
-	writeFileSync,
-} from "node:fs";
+// Writes are: read the file -> mutate the parsed object -> write a temp file ->
+// rename over the original. That keeps unknown keys, key order, and file
+// permissions intact, and never truncates a file that failed to parse.
+import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import { type JsonObject, isObject } from "./util.ts";
-
-/** Newest backups kept per file. */
-const MAX_BACKUPS = 20;
 
 export function agentDir(): string {
 	return getAgentDir();
@@ -68,17 +54,12 @@ export function readJsonFile(path: string): ReadJsonResult {
 	}
 }
 
-export interface WriteOptions {
-	/** Copy the previous contents to `<file>.bak-<timestamp>` first. Default true. */
-	backup?: boolean;
-}
-
 /**
  * Read-modify-write one JSON file. The mutator receives the parsed object and
  * edits it in place. Throws when the file exists but cannot be parsed, because
  * overwriting a broken file would destroy whatever the user hand-wrote.
  */
-export function updateJsonFile(path: string, mutate: (data: JsonObject) => void, options: WriteOptions = {}): void {
+export function updateJsonFile(path: string, mutate: (data: JsonObject) => void): void {
 	const current = readJsonFile(path);
 	if (current.exists && current.error) {
 		throw new Error(`${current.error} — fix or move the file first; refusing to overwrite it.`);
@@ -86,10 +67,9 @@ export function updateJsonFile(path: string, mutate: (data: JsonObject) => void,
 	const data = current.data ?? {};
 	mutate(data);
 	const text = `${JSON.stringify(data, null, 2)}\n`;
-	// No-op edits (reset to the inherited value, re-selecting the same default)
-	// must not spray backups into the agent directory.
+	// No-op edits (reset to the inherited value, re-selecting the same scope) must
+	// not rewrite the file.
 	if (current.text === text) return;
-	if (options.backup !== false && current.text !== undefined) backupFile(path);
 	writeTextAtomic(path, text);
 }
 
@@ -112,49 +92,6 @@ function writeTextAtomic(path: string, text: string): void {
 		// best effort
 	}
 	renameSync(temp, path);
-}
-
-/** Copy a config file to `<file>.bak-YYYYMMDD-HHmmss`, pruning old backups. */
-export function backupFile(path: string): string | undefined {
-	if (!existsSync(path)) return undefined;
-	const target = `${path}.bak-${timestamp()}`;
-	try {
-		copyFileSync(path, target);
-	} catch {
-		return undefined;
-	}
-	pruneBackups(path);
-	return target;
-}
-
-export function listBackups(path: string): string[] {
-	const directory = dirname(path);
-	const prefix = `${basename(path)}.bak-`;
-	try {
-		return readdirSync(directory)
-			.filter((name) => name.startsWith(prefix))
-			.sort()
-			.map((name) => join(directory, name));
-	} catch {
-		return [];
-	}
-}
-
-function pruneBackups(path: string): void {
-	const backups = listBackups(path);
-	for (const stale of backups.slice(0, Math.max(0, backups.length - MAX_BACKUPS))) {
-		try {
-			unlinkSync(stale);
-		} catch {
-			// best effort
-		}
-	}
-}
-
-function timestamp(): string {
-	const now = new Date();
-	const pad = (value: number) => String(value).padStart(2, "0");
-	return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
 }
 
 export function messageOf(error: unknown): string {

@@ -67,7 +67,6 @@ and maps what the server reports. Missing limits fall back to 32768 context /
 ## Safety
 
 - Read-modify-write: unknown keys and file permissions are preserved.
-- Every change backs up to `<file>.bak-YYYYMMDD-HHmmss` (newest 20 kept).
 - A file that fails to parse is never overwritten.
 - Built-in providers are never touched.
 
