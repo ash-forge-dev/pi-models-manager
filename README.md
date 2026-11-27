@@ -28,7 +28,7 @@ git clone https://github.com/ash-forge-dev/pi-models-manager.git \
 ```
 
 Then `/reload` in pi. No dependencies, no build step. `.pi/extensions/` instead for
-one project. Needs your GitHub credentials while the repo is private. Not on npm.
+one project.
 
 ## Use
 
